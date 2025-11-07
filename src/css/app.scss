@@ -1,1 +1,77 @@
 // app global css in SCSS form
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@300;400;500;700&display=swap');
+
+body {
+  font-family: 'Roboto', sans-serif;
+}
+
+.title {
+  font-family: 'Playfair Display', serif;
+}
+
+// Estilo minimalista com transições suaves
+* {
+  transition: all 0.3s ease;
+}
+
+.q-card {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.q-btn {
+  border-radius: 8px;
+  text-transform: none;
+  font-weight: 500;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.q-input,
+.q-select {
+  .q-field__control {
+    border-radius: 8px;
+  }
+}
+
+.q-table {
+  border-radius: 8px;
+
+  th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+  }
+}
+
+// Estilo para o drawer lateral
+.q-drawer {
+  .q-item {
+    border-radius: 8px;
+    margin: 4px 8px;
+
+    &:hover {
+      background-color: rgba(128, 0, 32, 0.1);
+    }
+
+    &.q-router-link--active {
+      background-color: rgba(128, 0, 32, 0.2);
+      color: #800020;
+    }
+  }
+}
+
+// Animações de fade
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}

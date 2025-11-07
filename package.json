@@ -1,9 +1,9 @@
 {
-  "name": "edumint-app",
-  "version": "0.0.1",
-  "description": "Edumint App",
-  "productName": "Edumint App",
-  "author": "Isai Medina <isai@zettabrasil.com.br>",
+  "name": "vin-rouge-bistro",
+  "version": "1.0.0",
+  "description": "Sistema de Gerenciamento para Restaurante de Alta Gastronomia",
+  "productName": "Vin Rouge Bistrô",
+  "author": "Isai Medina <hormigadev7@gmail.com>",
   "type": "module",
   "private": true,
   "scripts": {
