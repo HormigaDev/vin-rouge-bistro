@@ -95,6 +95,17 @@
             flat
             dense
             round
+            icon="visibility"
+            color="primary"
+            size="sm"
+            @click="handleView(props.row)"
+          >
+            <q-tooltip>Ver Detalhes</q-tooltip>
+          </q-btn>
+          <q-btn
+            flat
+            dense
+            round
             icon="edit"
             color="secondary"
             size="sm"
@@ -137,6 +148,98 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <!-- Master Detail -->
+    <MasterDetail
+      v-model="showDetail"
+      :title="selectedIngredient?.name || 'Detalhes do Ingrediente'"
+      width="500px"
+    >
+      <template v-if="selectedIngredient">
+        <div class="q-col-gutter-md">
+          <!-- Status do estoque -->
+          <div
+            class="q-pa-md rounded-borders"
+            :class="getStockBgClass(selectedIngredient.stock, selectedIngredient.minStock)"
+          >
+            <div class="row items-center">
+              <q-icon
+                :name="getStockIcon(selectedIngredient.stock, selectedIngredient.minStock)"
+                :color="getStockColor(selectedIngredient.stock, selectedIngredient.minStock)"
+                size="32px"
+                class="q-mr-md"
+              />
+              <div>
+                <div class="text-caption">Status do Estoque</div>
+                <div class="text-body1 text-bold">
+                  {{ getStockStatus(selectedIngredient.stock, selectedIngredient.minStock) }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Informações de estoque -->
+          <div class="row q-col-gutter-md">
+            <div class="col-6">
+              <div class="text-caption text-grey-7">Estoque Atual</div>
+              <div
+                class="text-h5"
+                :class="`text-${getStockColor(selectedIngredient.stock, selectedIngredient.minStock)}`"
+              >
+                {{ selectedIngredient.stock }} {{ selectedIngredient.unit }}
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="text-caption text-grey-7">Estoque Mínimo</div>
+              <div class="text-h5 text-grey-7">
+                {{ selectedIngredient.minStock }} {{ selectedIngredient.unit }}
+              </div>
+            </div>
+          </div>
+
+          <q-separator />
+
+          <!-- Unidade e custo -->
+          <div class="row q-col-gutter-md">
+            <div class="col-6">
+              <div class="text-caption text-grey-7">Unidade de Medida</div>
+              <q-chip color="info" text-color="white" dense>
+                {{ selectedIngredient.unit }}
+              </q-chip>
+            </div>
+            <div class="col-6">
+              <div class="text-caption text-grey-7">Custo Unitário</div>
+              <div class="text-h6 text-secondary">
+                R$ {{ formatPrice(selectedIngredient.cost) }}
+              </div>
+            </div>
+          </div>
+
+          <q-separator />
+
+          <!-- Valor em estoque -->
+          <div class="q-pa-md bg-grey-2 rounded-borders">
+            <div class="row justify-between items-center">
+              <span class="text-body1">Valor Total em Estoque:</span>
+              <span class="text-h5 text-primary">
+                R$ {{ formatPrice(selectedIngredient.stock * selectedIngredient.cost) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template #actions>
+        <q-btn flat label="Fechar" color="grey-7" v-close-popup />
+        <q-btn
+          unelevated
+          label="Editar"
+          color="primary"
+          icon="edit"
+          @click="handleEditFromDetail"
+        />
+      </template>
+    </MasterDetail>
   </q-page>
 </template>
 
@@ -145,6 +248,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { getIngredients, deleteIngredient } from 'stores/mock'
+import MasterDetail from 'components/MasterDetail.vue'
 
 defineOptions({
   name: 'IngredientsListPage',
@@ -157,6 +261,8 @@ const ingredients = ref([])
 const searchFilter = ref('')
 const deleteDialog = ref(false)
 const ingredientToDelete = ref(null)
+const showDetail = ref(false)
+const selectedIngredient = ref(null)
 
 const columns = [
   { name: 'name', label: 'Nome', field: 'name', align: 'left', sortable: true },
@@ -194,6 +300,16 @@ function handleEdit(ingredient) {
   router.push(`/ingredients/${ingredient.id}`)
 }
 
+function handleView(ingredient) {
+  selectedIngredient.value = ingredient
+  showDetail.value = true
+}
+
+function handleEditFromDetail() {
+  showDetail.value = false
+  router.push(`/ingredients/${selectedIngredient.value.id}`)
+}
+
 function handleDelete(ingredient) {
   ingredientToDelete.value = ingredient
   deleteDialog.value = true
@@ -223,6 +339,24 @@ async function confirmDelete() {
 function formatPrice(price) {
   if (price === undefined || price === null) return '0,00'
   return price.toFixed(2).replace('.', ',')
+}
+
+function getStockStatus(stock, minStock) {
+  if (stock < minStock) return 'Estoque Crítico'
+  if (stock < minStock * 2) return 'Estoque Baixo'
+  return 'Estoque Normal'
+}
+
+function getStockIcon(stock, minStock) {
+  if (stock < minStock) return 'error'
+  if (stock < minStock * 2) return 'warning'
+  return 'check_circle'
+}
+
+function getStockBgClass(stock, minStock) {
+  if (stock < minStock) return 'bg-red-1'
+  if (stock < minStock * 2) return 'bg-orange-1'
+  return 'bg-green-1'
 }
 </script>
 

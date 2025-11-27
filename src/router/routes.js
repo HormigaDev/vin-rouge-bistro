@@ -71,11 +71,6 @@ const routes = [
         component: () => import('pages/OrderForm.vue'),
       },
       {
-        path: '/orders/:id',
-        name: 'orders-detail',
-        component: () => import('pages/OrderDetails.vue'),
-      },
-      {
         path: '/reservations',
         name: 'reservations',
         component: () => import('pages/ReservationsList.vue'),

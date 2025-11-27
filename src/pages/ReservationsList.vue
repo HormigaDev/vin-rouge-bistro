@@ -95,6 +95,17 @@
       <template v-slot:body-cell-actions="props">
         <q-td :props="props">
           <q-btn
+            flat
+            dense
+            round
+            icon="visibility"
+            color="primary"
+            size="sm"
+            @click="viewReservation(props.row)"
+          >
+            <q-tooltip>Ver Detalhes</q-tooltip>
+          </q-btn>
+          <q-btn
             v-if="props.row.status === 'Pendente'"
             flat
             dense
@@ -137,6 +148,105 @@
       <q-icon name="event_busy" size="64px" color="grey-5" />
       <p class="text-h6 text-grey-6 q-mt-md">Nenhuma reserva encontrada</p>
     </div>
+
+    <!-- Master Detail -->
+    <MasterDetail
+      v-model="showDetail"
+      :title="`Reserva de ${selectedReservation?.client || ''}`"
+      width="500px"
+    >
+      <template v-if="selectedReservation">
+        <div class="q-col-gutter-md">
+          <!-- Status -->
+          <div
+            class="text-center q-pa-md rounded-borders"
+            :class="getStatusBgClass(selectedReservation.status)"
+          >
+            <q-badge
+              :color="getStatusColor(selectedReservation.status)"
+              :label="selectedReservation.status"
+              class="text-body1"
+              style="padding: 8px 16px"
+            />
+          </div>
+
+          <!-- Informações do cliente -->
+          <div>
+            <div class="text-caption text-grey-7">Cliente</div>
+            <div class="text-h6">{{ selectedReservation.client }}</div>
+          </div>
+
+          <div>
+            <div class="text-caption text-grey-7">Telefone</div>
+            <div class="text-body1">
+              <q-icon name="phone" class="q-mr-xs" />
+              {{ selectedReservation.phone }}
+            </div>
+          </div>
+
+          <q-separator />
+
+          <!-- Data e hora -->
+          <div class="row q-col-gutter-md">
+            <div class="col-6">
+              <div class="text-caption text-grey-7">Data</div>
+              <div class="text-body1">
+                <q-icon name="event" class="q-mr-xs" />
+                {{ formatDate(selectedReservation.date) }}
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="text-caption text-grey-7">Horário</div>
+              <div class="text-body1">
+                <q-icon name="schedule" class="q-mr-xs" />
+                {{ selectedReservation.time }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Pessoas -->
+          <div>
+            <div class="text-caption text-grey-7">Número de Pessoas</div>
+            <q-chip color="info" text-color="white" icon="people" size="lg">
+              {{ selectedReservation.people }} pessoa(s)
+            </q-chip>
+          </div>
+
+          <q-separator />
+
+          <!-- Observações -->
+          <div>
+            <div class="text-caption text-grey-7">Observações</div>
+            <div class="text-body1 q-pa-sm bg-grey-1 rounded-borders" style="min-height: 60px">
+              {{ selectedReservation.notes || 'Sem observações' }}
+            </div>
+          </div>
+
+          <!-- Ações de status -->
+          <div v-if="selectedReservation.status === 'Pendente'" class="q-pt-md">
+            <q-btn
+              unelevated
+              color="positive"
+              icon="check"
+              label="Confirmar Reserva"
+              class="full-width"
+              @click="confirmReservationStatusFromDetail"
+            />
+          </div>
+        </div>
+      </template>
+
+      <template #actions>
+        <q-btn flat label="Fechar" color="grey-7" v-close-popup />
+        <q-btn
+          unelevated
+          label="Editar"
+          color="primary"
+          icon="edit"
+          @click="editReservationFromDetail"
+        />
+      </template>
+    </MasterDetail>
   </q-page>
 </template>
 
@@ -149,6 +259,7 @@ import {
   updateReservation,
   deleteReservation as deleteReservationAPI,
 } from 'stores/mock'
+import MasterDetail from 'components/MasterDetail.vue'
 
 defineOptions({
   name: 'ReservationsListPage',
@@ -158,6 +269,8 @@ const router = useRouter()
 const $q = useQuasar()
 
 const reservations = ref([])
+const showDetail = ref(false)
+const selectedReservation = ref(null)
 
 const filters = ref({
   search: '',
@@ -214,10 +327,25 @@ function getStatusColor(status) {
   return colors[status] || 'grey'
 }
 
+function getStatusBgClass(status) {
+  const classes = {
+    Pendente: 'bg-orange-1',
+    Confirmada: 'bg-green-1',
+    Cancelada: 'bg-red-1',
+    Finalizada: 'bg-blue-1',
+  }
+  return classes[status] || 'bg-grey-1'
+}
+
 function formatDate(date) {
   if (!date) return '-'
   const [year, month, day] = date.split('-')
   return `${day}/${month}/${year}`
+}
+
+function viewReservation(reservation) {
+  selectedReservation.value = reservation
+  showDetail.value = true
 }
 
 async function confirmReservationStatus(reservation) {
@@ -240,8 +368,18 @@ async function confirmReservationStatus(reservation) {
   }
 }
 
+async function confirmReservationStatusFromDetail() {
+  await confirmReservationStatus(selectedReservation.value)
+  selectedReservation.value = reservations.value.find((r) => r.id === selectedReservation.value.id)
+}
+
 function editReservation(reservation) {
   router.push(`/reservations/${reservation.id}`)
+}
+
+function editReservationFromDetail() {
+  showDetail.value = false
+  router.push(`/reservations/${selectedReservation.value.id}`)
 }
 
 function confirmDeleteReservation(reservation) {

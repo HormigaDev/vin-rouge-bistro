@@ -151,6 +151,83 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <!-- Master Detail -->
+    <MasterDetail
+      v-model="showDetail"
+      :title="selectedDish?.name || 'Detalhes do Prato'"
+      width="550px"
+    >
+      <template v-if="selectedDish">
+        <div class="q-col-gutter-md">
+          <!-- Imagem -->
+          <div class="text-center">
+            <q-img
+              :src="selectedDish.image || 'https://via.placeholder.com/400'"
+              :ratio="16 / 9"
+              class="rounded-borders"
+              style="max-height: 200px"
+            />
+          </div>
+
+          <!-- Informações básicas -->
+          <div class="row q-col-gutter-md">
+            <div class="col-6">
+              <div class="text-caption text-grey-7">Categoria</div>
+              <q-chip :color="getCategoryColor(selectedDish.category)" text-color="white" dense>
+                {{ selectedDish.category }}
+              </q-chip>
+            </div>
+            <div class="col-6">
+              <div class="text-caption text-grey-7">Disponibilidade</div>
+              <q-badge
+                :color="selectedDish.available ? 'positive' : 'negative'"
+                :label="selectedDish.available ? 'Disponível' : 'Indisponível'"
+              />
+            </div>
+          </div>
+
+          <!-- Preço -->
+          <div>
+            <div class="text-caption text-grey-7">Preço</div>
+            <div class="text-h5 text-secondary">R$ {{ formatPrice(selectedDish.price) }}</div>
+          </div>
+
+          <!-- Descrição -->
+          <div>
+            <div class="text-caption text-grey-7">Descrição</div>
+            <div class="text-body1">{{ selectedDish.description || 'Sem descrição' }}</div>
+          </div>
+
+          <!-- Ingredientes -->
+          <div v-if="selectedDish.ingredients?.length">
+            <div class="text-caption text-grey-7 q-mb-sm">Ingredientes</div>
+            <div class="q-gutter-xs">
+              <q-chip
+                v-for="ingredientId in selectedDish.ingredients"
+                :key="ingredientId"
+                color="grey-3"
+                text-color="grey-8"
+                dense
+              >
+                {{ getIngredientName(ingredientId) }}
+              </q-chip>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template #actions>
+        <q-btn flat label="Fechar" color="grey-7" v-close-popup />
+        <q-btn
+          unelevated
+          label="Editar"
+          color="primary"
+          icon="edit"
+          @click="handleEdit(selectedDish)"
+        />
+      </template>
+    </MasterDetail>
   </q-page>
 </template>
 
@@ -158,16 +235,20 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
-import { getDishes, deleteDish } from 'stores/mock'
+import { getDishes, deleteDish, getIngredients } from 'stores/mock'
 import DishCard from 'components/DishCard.vue'
+import MasterDetail from 'components/MasterDetail.vue'
 
 const router = useRouter()
 const $q = useQuasar()
 
 const dishes = ref([])
+const ingredients = ref([])
 const viewMode = ref('cards')
 const deleteDialog = ref(false)
 const dishToDelete = ref(null)
+const showDetail = ref(false)
+const selectedDish = ref(null)
 
 const filters = ref({
   search: '',
@@ -216,18 +297,25 @@ const filteredDishes = computed(() => {
 
 onMounted(async () => {
   await loadDishes()
+  await loadIngredients()
 })
 
 async function loadDishes() {
   dishes.value = await getDishes()
 }
 
+async function loadIngredients() {
+  ingredients.value = await getIngredients()
+}
+
 function handleEdit(dish) {
+  showDetail.value = false
   router.push(`/dishes/${dish.id}`)
 }
 
 function handleView(dish) {
-  router.push(`/dishes/${dish.id}`)
+  selectedDish.value = dish
+  showDetail.value = true
 }
 
 function handleDelete(dish) {
@@ -258,6 +346,20 @@ async function confirmDelete() {
 
 function formatPrice(price) {
   return price.toFixed(2).replace('.', ',')
+}
+
+function getCategoryColor(category) {
+  const colors = {
+    Entrada: 'info',
+    Principal: 'primary',
+    Sobremesa: 'accent',
+  }
+  return colors[category] || 'grey'
+}
+
+function getIngredientName(ingredientId) {
+  const ingredient = ingredients.value.find((i) => i.id === ingredientId)
+  return ingredient?.name || `Ingrediente ${ingredientId}`
 }
 </script>
 
